@@ -8,7 +8,6 @@ cleaning interferometric data.
 import FITS_tools as ft
 from astropy.io import fits
 import numpy as np
-from reproject import reproject
 from astropy.wcs import WCS
 
 
