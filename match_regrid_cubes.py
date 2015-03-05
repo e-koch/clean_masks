@@ -11,9 +11,10 @@ import numpy as np
 from astropy.wcs import WCS
 
 
-def match_regrid(filename1, filename2, reappend_dim=True,
-                 degrade_factor=(1, 1, 8, 8), restore_dim=True,
-                 remove_hist=True, save_output=False, save_name='new_img'):
+def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
+                 degrade_factor=(1, 1, 8, 8), restore_dim=False,
+                 is_binary_mask=True, remove_hist=True, save_output=False,
+                 save_name='new_img'):
     '''
     Input two fits filenames. The output will be the projection of file 1
     onto file 2
@@ -34,6 +35,13 @@ def match_regrid(filename1, filename2, reappend_dim=True,
     if remove_hist:
         # Remove the huge CASA history
         del hdr2["HISTORY"]
+
+    # Try finding the spectral axis
+    naxes = hdr1['NAXES']
+
+    for i in range(1, naxes+1):
+        if 'vel' or 'freq' in hdr1['CTYPE'+str(i)]:
+            vel_axis = i - 1
 
     # Make sure slices match axes
     if hdr2['NAXIS'] != len(degrade_factor):
@@ -64,12 +72,13 @@ def match_regrid(filename1, filename2, reappend_dim=True,
         regrid_img = ft.hcongrid.hcongrid(fits1[0].data, fits1[0].header, hdr2)
     else:
         regrid_img = ft.regrid_cube(fits1[0].data, hdr1, new_hdr2,
-                                    specaxes=(2, 2))
+                                    specaxes=(vel_axis, vel_axis))
         regrid_img = regrid_img.reshape((1,)+regrid_img.shape)
 
     if restore_dim:
         regrid_hdr = _regrid_header(hdr1, hdr2)
-        regrid_img = _restore_shape(regrid_img, degrade_factor)
+        regrid_img = _restore_shape(regrid_img, degrade_factor,
+                                    vel_axis=vel_axis)
     else:
         regrid_hdr = _regrid_header(hdr1, new_hdr2)
 
@@ -113,7 +122,7 @@ def _restore_shape(cube, zoom_factor, vel_axis=1, verbose=True):
         if v == 0:
             full_cube = zoom_plane
         else:
-            full_cube = np.dstack((full_cube, zoom_plane))
+            full_cube = np.hstack((full_cube, zoom_plane))
 
     return full_cube.T
 
