@@ -38,12 +38,12 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
 
     # Try finding the spectral axis
     if spec_axis is None:
-        naxes = hdr1['NAXES']
+        naxes = hdr1['NAXIS']
 
         for i in range(1, naxes+1):
-            if 'vel' or 'freq' in hdr1['CTYPE'+str(i)]:
-                spec_axis = i - 1
-
+            if 'VRAD' in hdr1['CTYPE'+str(i)]:
+                spec_axis = i - naxes + 2
+                break
 
     # Make sure slices match axes
     if hdr2['NAXIS'] != len(degrade_factor):
@@ -74,13 +74,39 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
         regrid_img = ft.hcongrid.hcongrid(fits1[0].data, fits1[0].header, hdr2)
     else:
         regrid_img = ft.regrid_cube(fits1[0].data, hdr1, new_hdr2,
-                                    specaxes=(spec_axis, spec_axis))
+                                    specaxes=(2, 2))
         regrid_img = regrid_img.reshape((1,)+regrid_img.shape)
+
+    if is_binary_mask:
+        # Regridding can cause holes in the mask.
+        from scipy import ndimage as nd
+
+        vel_slice = [slice(None)] * naxes
+
+        vel_dim = shape2[spec_axis]
+
+        for i in range(vel_dim):
+            vel_slice[spec_axis] = slice(i, i+1)
+
+            regrid_img[vel_slice] = \
+                nd.binary_closing(regrid_img[vel_slice],
+                                  structure=np.ones((1, 1, 3, 3)))
+            regrid_img[vel_slice] = \
+                nd.binary_opening(regrid_img[vel_slice],
+                                  structure=np.ones((1, 1, 3, 3)))
+
+            regrid_img[vel_slice] = \
+                nd.median_filter(regrid_img[vel_slice], 5)
+
+        # For restoring full size if needed
+        order = 0
+    else:
+        order = 3
 
     if restore_dim:
         regrid_hdr = _regrid_header(hdr1, hdr2)
         regrid_img = _restore_shape(regrid_img, degrade_factor,
-                                    spec_axis=spec_axis)
+                                    spec_axis=spec_axis, order=order)
     else:
         regrid_hdr = _regrid_header(hdr1, new_hdr2)
 
@@ -92,7 +118,8 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
         return fits.PrimaryHDU(regrid_img, header=regrid_hdr)
 
 
-def _restore_shape(cube, zoom_factor, spec_axis=1, verbose=True):
+def _restore_shape(cube, zoom_factor, spec_axis=1, order=3,
+                   verbose=True):
     '''
     Interpolates the cube by channel to the given shape. Assumes
     velocity dimension has not been degraded.
@@ -116,8 +143,8 @@ def _restore_shape(cube, zoom_factor, spec_axis=1, verbose=True):
 
         plane[bad_pix] = 0
 
-        zoom_plane = zoom(plane, zoom_factor)
-        zoom_bad_pix = zoom(bad_pix, zoom_factor)
+        zoom_plane = zoom(plane, zoom_factor, order=order)
+        zoom_bad_pix = zoom(bad_pix, zoom_factor, order=0)
 
         zoom_plane[zoom_bad_pix] = np.NaN
 
