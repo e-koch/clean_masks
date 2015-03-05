@@ -37,11 +37,13 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
         del hdr2["HISTORY"]
 
     # Try finding the spectral axis
-    naxes = hdr1['NAXES']
+    if spec_axis is None:
+        naxes = hdr1['NAXES']
 
-    for i in range(1, naxes+1):
-        if 'vel' or 'freq' in hdr1['CTYPE'+str(i)]:
-            vel_axis = i - 1
+        for i in range(1, naxes+1):
+            if 'vel' or 'freq' in hdr1['CTYPE'+str(i)]:
+                spec_axis = i - 1
+
 
     # Make sure slices match axes
     if hdr2['NAXIS'] != len(degrade_factor):
@@ -72,13 +74,13 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
         regrid_img = ft.hcongrid.hcongrid(fits1[0].data, fits1[0].header, hdr2)
     else:
         regrid_img = ft.regrid_cube(fits1[0].data, hdr1, new_hdr2,
-                                    specaxes=(vel_axis, vel_axis))
+                                    specaxes=(spec_axis, spec_axis))
         regrid_img = regrid_img.reshape((1,)+regrid_img.shape)
 
     if restore_dim:
         regrid_hdr = _regrid_header(hdr1, hdr2)
         regrid_img = _restore_shape(regrid_img, degrade_factor,
-                                    vel_axis=vel_axis)
+                                    spec_axis=spec_axis)
     else:
         regrid_hdr = _regrid_header(hdr1, new_hdr2)
 
@@ -90,7 +92,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
         return fits.PrimaryHDU(regrid_img, header=regrid_hdr)
 
 
-def _restore_shape(cube, zoom_factor, vel_axis=1, verbose=True):
+def _restore_shape(cube, zoom_factor, spec_axis=1, verbose=True):
     '''
     Interpolates the cube by channel to the given shape. Assumes
     velocity dimension has not been degraded.
@@ -98,7 +100,7 @@ def _restore_shape(cube, zoom_factor, vel_axis=1, verbose=True):
 
     naxis = len(cube.shape)
 
-    vel_shape = cube.shape[vel_axis]
+    vel_shape = cube.shape[spec_axis]
 
     from scipy.ndimage import zoom
 
@@ -106,7 +108,7 @@ def _restore_shape(cube, zoom_factor, vel_axis=1, verbose=True):
 
     for v in np.arange(vel_shape):
         print 'Channel %s/%s' % (v+1, vel_shape)
-        vel_slice[vel_axis] = slice(v, v+1)
+        vel_slice[spec_axis] = slice(v, v+1)
 
         plane = cube[vel_slice]
 
