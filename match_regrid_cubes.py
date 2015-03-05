@@ -12,7 +12,7 @@ from astropy.wcs import WCS
 
 
 def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
-                 degrade_factor=(1, 1, 8, 8), restore_dim=False,
+                 degrade_factor=(1, 1, 8, 8), restore_dim=True,
                  is_binary_mask=True, remove_hist=True, save_output=False,
                  save_name='new_img'):
     '''
@@ -139,14 +139,15 @@ def _restore_shape(cube, zoom_factor, spec_axis=1, order=3,
 
         plane = cube[vel_slice]
 
-        bad_pix = ~np.isfinite(plane)
-
-        plane[bad_pix] = 0
+        if ~np.isfinite(plane).any():
+            bad_pix = ~np.isfinite(plane)
+            plane[bad_pix] = 0
 
         zoom_plane = zoom(plane, zoom_factor, order=order)
-        zoom_bad_pix = zoom(bad_pix, zoom_factor, order=0)
 
-        zoom_plane[zoom_bad_pix] = np.NaN
+        if ~np.isfinite(plane).any():
+            zoom_bad_pix = zoom(bad_pix, zoom_factor, order=0)
+            zoom_plane[zoom_bad_pix] = np.NaN
 
         if v == 0:
             full_cube = zoom_plane
