@@ -13,7 +13,7 @@ from astropy.wcs import WCS
 
 def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
                  degrade_factor=(1, 1, 8, 8), restore_dim=True,
-                 is_binary_mask=True, remove_hist=True, save_output=False,
+                 is_binary_mask=False, remove_hist=True, save_output=False,
                  save_name='new_img'):
     '''
     Input two fits filenames. The output will be the projection of file 1
@@ -154,7 +154,7 @@ def _restore_shape(cube, zoom_factor, spec_axis=1, order=3,
         else:
             full_cube = np.hstack((full_cube, zoom_plane))
 
-    return full_cube.T
+    return full_cube
 
 
 def _regrid_header(header1, header2):
