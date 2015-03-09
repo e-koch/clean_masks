@@ -12,9 +12,9 @@ from astropy.wcs import WCS
 
 
 def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
-                 degrade_factor=(1, 1, 8, 8), restore_dim=True,
-                 is_binary_mask=False, remove_hist=True, save_output=False,
-                 save_name='new_img'):
+                 spec_slice=None, degrade_factor=(1, 1, 8, 8),
+                 restore_dim=True, is_binary_mask=False, remove_hist=True,
+                 save_output=False, save_name='new_img'):
     '''
     Input two fits filenames. The output will be the projection of file 1
     onto file 2
@@ -43,6 +43,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
         for i in range(1, naxes+1):
             if 'VRAD' in hdr1['CTYPE'+str(i)]:
                 spec_axis = i - naxes + 2
+                wcs_spec_axis = i
                 break
 
     # Make sure slices match axes
@@ -51,6 +52,14 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
                           dimensions in '+filename2)
 
     slices = [slice(None, None, i) for i in degrade_factor]
+
+    if spec_slice is not None:
+        assert len(spec_slice) == 2
+
+        step = slices[wcs_spec_axis].step
+
+        slices[wcs_spec_axis] = \
+            slice(spec_slice[0], spec_slice[1], step)
 
     # Assume numpy convention for axes
     new_wcs = WCS(hdr2).slice(slices)
