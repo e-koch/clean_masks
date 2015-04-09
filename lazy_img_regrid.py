@@ -1,13 +1,15 @@
 
 import scipy.ndimage as nd
 from warnings import warn
+import numpy as np
 
 '''
 Regrid an image in the laziest way possible (ie. no transformations)
 '''
 
 
-def lazy_2D_regrid(image, new_dim, hdr, channel_slice=None, *args):
+def lazy_2D_regrid(image, new_dim, hdr, channel_slice=None,
+                   append_dim=True, *args):
     '''
     '''
 
@@ -31,6 +33,14 @@ def lazy_2D_regrid(image, new_dim, hdr, channel_slice=None, *args):
     new_img = nd.zoom(img_slice, zoom_factor, *args)
 
     new_hdr = _3D_to_2D_hdr(hdr, zoom_factor, cntr_pix, specaxis=4, polaxis=3)
+
+    if append_dim:
+        if len(image.shape) == 2:
+            pass
+        elif len(image.shape) == 3:
+            new_img = new_img[np.newaxis, :, :]
+        elif len(image.shape) == 4:
+            new_img = new_img[np.newaxis, np.newaxis, :, :]
 
     return new_img, new_hdr
 
@@ -61,14 +71,12 @@ def _3D_to_2D_hdr(header, zoom_factor, cntr_pix, specaxis=3, polaxis=None,
 
     twoD_header = header.copy()
 
-    for key in del_keys:
+    if rm_axes:
+        for key in del_keys:
+            for axis in del_axes:
+                del twoD_header[key+axis]
+    else:
         for axis in del_axes:
-            del twoD_header[key+axis]
-
-    for axis in del_axes:
-        if rm_axes:
-            del twoD_header['NAXIS'+axis]
-        else:
             twoD_header['NAXIS'+axis] = 1
 
     if rm_axes:
