@@ -3,7 +3,7 @@ from spectral_cube import SpectralCube
 import numpy as np
 import scipy.ndimage as nd
 from signal_id import RadioMask, Noise
-from radio_beam import RadioBeam
+from radio_beam import Beam
 import astropy.units as u
 
 '''
@@ -28,7 +28,7 @@ class CleanMask(object):
         Lower sigma cut.
     high_cut : float or int
         Higher sigma cut.
-    beam : RadioBeam
+    beam : Beam
         Object defining the beam.
 
     """
@@ -37,14 +37,13 @@ class CleanMask(object):
         self.cube = cube
         self.low_cut = low_cut
         self.high_cut = high_cut
-        self.method = method
 
-        if isinstance(beam, RadioBeam):
+        if isinstance(beam, Beam):
             self.beam = beam
         elif beam is None:
             self.beam = None
         else:
-            raise TypeError("beam must be a RadioBeam object or None.")
+            raise TypeError("beam must be a Beam object or None.")
 
         self.vel_slices = self.cube.shape[0]  # Generalize with WCS object
 
@@ -183,29 +182,35 @@ class CleanMask(object):
             #Should this be made into an optional input?
             beam_pix_area = np.floor(np.pi * major * minor)
 
+        else:
+            beam_pix_area = 0
+
         for i in range(self.vel_slices):
 
             low_labels, low_num = nd.label(self._low_mask[i, :, :], connect)
 
-            for i in range(1, low_num+1):
+            for j in range(1, low_num+1):
 
-                low_pix = zip(*np.where(low_labels == i))
+                low_pix = zip(*np.where(low_labels == j))
 
-                high_pix = zip(*np.where(high_labels > 0))
+                high_pix = zip(*np.where(self._high_mask[i, :, :] > 0))
 
                 # Now check for overlap
 
                 matches = list(set(low_pix) & set(high_pix))
 
                 # Add in some check to make sure region is at least the beam size.
-                if len(matches) <= min_pix:
+                if len(matches) >= min_pix:
                     continue
 
-                if len(matches) <= beam_pix_area:
+                if len(matches) > beam_pix_area:
                     continue
+
+                x_pos = [x for x, y in low_pix]
+                y_pos = [y for x, y in low_pix]
 
                 # If less than match threshold, remove region in the low mask
-                self._low_mask[i, :, :][low_pix] = 0
+                self._low_mask[i, :, :][x_pos, y_pos] = 0
 
         self._mask = self._low_mask
 
