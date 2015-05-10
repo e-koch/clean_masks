@@ -196,6 +196,10 @@ class CleanMask(object):
 
         for i in range(self.vel_slices):
 
+            # Skip empty channels
+            if self.high_mask[i, :, :].max is False:
+                continue
+
             low_labels, low_num = nd.label(self._low_mask[i, :, :], connect)
 
             for j in range(1, low_num+1):
