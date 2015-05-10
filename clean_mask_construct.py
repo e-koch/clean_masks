@@ -125,31 +125,40 @@ class CleanMask(object):
             raise TypeError("which_mask must be 'final', 'low', or 'high'.")
 
 
-    def dilate_into_low(self):
+    def dilate_into_low(self, max_iter=100):
         '''
         Dilates the high mask into the low.
         The stopping criterion is when the higher mask crosses lower the one
         '''
 
-        dilate_struct = nd.generate_binary_structure((3, 3))
+        dilate_struct = nd.generate_binary_structure(2, 3)
 
         for i in range(self.vel_slices):
 
+            # Skip empty channels
+            if self._high_mask[i, :, :].max() is False:
+                continue
+
+            iter = 0
             while True:
 
                 self._high_mask[i, :, :] = \
                     nd.binary_dilation(self._high_mask[i, :, :],
-                                       struct=dilate_struct)
+                                       structure=dilate_struct)
 
                 posns = np.where(self._high_mask[i, :, :] > 0)
 
                 if np.any(self._low_mask[i, :, :][posns] == 0):
 
                     # Go back one dilation
-                    self._high_mask = \
-                        nd.binary_erosion(self._high_mask,
-                                          struct=dilate_struct)
+                    self._high_mask[i, :, :] = \
+                        nd.binary_erosion(self._high_mask[i, :, :],
+                                          structure=dilate_struct)
 
+                    break
+
+                if iter == max_iter:
+                    print "Reached max iterations."
                     break
 
         self._mask = self._high_mask
