@@ -229,5 +229,15 @@ class CleanMask(object):
 
         return self
 
-    def make_mask(self, method="dilate"):
-        pass
+    def make_mask(self, method="dilate", compute_slicewise=False):
+
+        self.make_initial_masks(compute_slicewise=compute_slicewise)
+
+        if method == "dilate":
+            self.dilate_into_low()
+        elif method == "remove small":
+            self.remove_high_components()
+        else:
+            raise TypeError("method must be 'dilate' or 'remove small'.")
+
+        return self
