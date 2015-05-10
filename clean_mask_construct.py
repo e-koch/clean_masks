@@ -4,6 +4,7 @@ import numpy as np
 import scipy.ndimage as nd
 from signal_id import RadioMask, Noise
 from radio_beam import RadioBeam
+import astropy.units as u
 
 '''
 Routines for constructing a robust clean mask.
@@ -16,13 +17,34 @@ Routines for constructing a robust clean mask.
 
 
 class CleanMask(object):
-    """docstring for CleanMask"""
-    def __init__(self, cube, low_cut, high_cut, method="dilate"):
+    """
+    Creates a robust CLEAN mask.
+
+    Parameters
+    ----------
+    cube : numpy.ndarray
+
+    low_cut : float or int
+        Lower sigma cut.
+    high_cut : float or int
+        Higher sigma cut.
+    beam : RadioBeam
+        Object defining the beam.
+
+    """
+    def __init__(self, cube, low_cut, high_cut, beam=None):
         super(CleanMask, self).__init__()
         self.cube = cube
         self.low_cut = low_cut
         self.high_cut = high_cut
         self.method = method
+
+        if isinstance(beam, RadioBeam):
+            self.beam = beam
+        elif beam is None:
+            self.beam = None
+        else:
+            raise TypeError("beam must be a RadioBeam object or None.")
 
         self.vel_slices = self.cube.shape[0]  # Generalize with WCS object
 
@@ -135,14 +157,31 @@ class CleanMask(object):
 
         return self
 
-    def remove_high_components(self, min_pix=10):
+    def remove_high_components(self, min_pix=10, beam_check=False, pixscale=None):
         '''
         Remove components in the low mask which are not
         contained in the high mask.
+
+        The criteria is set by min_pix, or is based off of the beam area.
+        Note that if min_pix < beam area, min_pix has no effect.
         '''
 
         # 8-connectivity
         connect = np.ones((3, 3))
+
+        # Objects must be at least the beam area to be kept.
+        if beam_check:
+
+            # Remove this when WCS object is added.
+            if pixscale is None:
+                raise TypeError("pixscale must be specified to use beamarea")
+
+            major = self.major.to(u.deg).value/pixscale
+            minor = self.minor.to(u.deg).value/pixscale
+
+            # Round down by default?
+            #Should this be made into an optional input?
+            beam_pix_area = np.floor(np.pi * major * minor)
 
         for i in range(self.vel_slices):
 
@@ -162,6 +201,9 @@ class CleanMask(object):
                 if len(matches) <= min_pix:
                     continue
 
+                if len(matches) <= beam_pix_area:
+                    continue
+
                 # If less than match threshold, remove region in the low mask
                 self._low_mask[i, :, :][low_pix] = 0
 
@@ -169,3 +211,5 @@ class CleanMask(object):
 
         return self
 
+    def make_mask(self, method="dilate"):
+        pass
