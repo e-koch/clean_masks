@@ -141,9 +141,8 @@ class CleanMask(object):
 
             print "Iteration %s of %s" % (str(i+1), self.vel_slices)
 
-            iter = 0
+            iters = 0
             while True:
-
                 self._high_mask[i, :, :] = \
                     nd.binary_dilation(self._high_mask[i, :, :],
                                        structure=dilate_struct)
@@ -159,7 +158,9 @@ class CleanMask(object):
 
                     break
 
-                if iter == max_iter:
+                iters += 1
+
+                if iters == max_iter:
                     print "Reached max iterations."
                     break
 
