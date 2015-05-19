@@ -139,7 +139,8 @@ class CleanMask(object):
             if self._high_mask[i, :, :].max() is False:
                 continue
 
-            print "Iteration %s of %s" % (str(i+1), self.vel_slices)
+            if verbose
+                print "Iteration %s of %s" % (str(i+1), self.vel_slices)
 
             iters = 0
             while True:
@@ -168,7 +169,8 @@ class CleanMask(object):
 
         return self
 
-    def remove_high_components(self, min_pix=10, beam_check=False, pixscale=None):
+    def remove_high_components(self, min_pix=10, beam_check=False,
+                               pixscale=None, verbose=False):
         '''
         Remove components in the low mask which are not
         contained in the high mask.
@@ -199,7 +201,8 @@ class CleanMask(object):
 
         for i in range(self.vel_slices):
 
-            print "Iteration %s of %s" % (str(i+1), self.vel_slices)
+            if verbose:
+                print "Iteration %s of %s" % (str(i+1), self.vel_slices)
 
             # Skip empty channels
             if self.high_mask[i, :, :].max is False:
@@ -254,12 +257,16 @@ class CleanMask(object):
 
         from scipy.ndimage import median_filter
 
-        self._mask = median_filter(self._mask,
-                                   footprint=np.ones(major, minor))
+
+        for i in range(self.vel_slices):
+            self._mask[i, :, :] = \
+                median_filter(self._mask[i, :, :],
+                              footprint=np.ones(major, minor))
 
         return self
 
-    def make_mask(self, method="dilate", compute_slicewise=False):
+    def make_mask(self, method="dilate", compute_slicewise=False,
+                  smooth=False, verbose=False):
 
         self.make_initial_masks(compute_slicewise=compute_slicewise)
 
