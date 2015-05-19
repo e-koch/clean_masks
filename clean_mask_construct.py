@@ -199,6 +199,8 @@ class CleanMask(object):
 
         for i in range(self.vel_slices):
 
+            print "Iteration %s of %s" % (str(i+1), self.vel_slices)
+
             # Skip empty channels
             if self.high_mask[i, :, :].max is False:
                 continue
