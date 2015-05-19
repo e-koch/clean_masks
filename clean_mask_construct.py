@@ -234,6 +234,31 @@ class CleanMask(object):
 
         return self
 
+    def _smooth_it(self, kern_size='beam', pixscale=None):
+        '''
+        Apply median filter to smooth the edges of the mask.
+        '''
+
+        if kern_size is 'beam':
+            if pixscale is None:
+                raise TypeError("pixscale must be specified to use beamarea")
+
+            major = self.major.to(u.deg).value/pixscale
+            minor = self.minor.to(u.deg).value/pixscale
+
+        elif isinstance(kern_size, float) or isinstance(kern_size, int):
+            major = kern_size
+            minor = kern_size
+        else:
+            Warning("kern_size must be 'beam', or a float or integer.")
+
+        from scipy.ndimage import median_filter
+
+        self._mask = median_filter(self._mask,
+                                   footprint=np.ones(major, minor))
+
+        return self
+
     def make_mask(self, method="dilate", compute_slicewise=False):
 
         self.make_initial_masks(compute_slicewise=compute_slicewise)
