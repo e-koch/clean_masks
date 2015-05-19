@@ -125,7 +125,7 @@ class CleanMask(object):
             raise TypeError("which_mask must be 'final', 'low', or 'high'.")
 
 
-    def dilate_into_low(self, max_iter=100):
+    def dilate_into_low(self, max_iter=100, verbose=False):
         '''
         Dilates the high mask into the low.
         The stopping criterion is when the higher mask crosses lower the one
@@ -138,6 +138,8 @@ class CleanMask(object):
             # Skip empty channels
             if self._high_mask[i, :, :].max() is False:
                 continue
+
+            print "Iteration %s of %s" % (str(i+1), self.vel_slices)
 
             iter = 0
             while True:
