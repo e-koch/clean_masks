@@ -139,7 +139,7 @@ class CleanMask(object):
             if self._high_mask[i, :, :].max() is False:
                 continue
 
-            if verbose
+            if verbose:
                 print "Iteration %s of %s" % (str(i+1), self.vel_slices)
 
             iters = 0
