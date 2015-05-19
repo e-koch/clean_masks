@@ -261,7 +261,7 @@ class CleanMask(object):
         for i in range(self.vel_slices):
             self._mask[i, :, :] = \
                 median_filter(self._mask[i, :, :],
-                              footprint=np.ones(major, minor))
+                              footprint=np.ones((major, minor)))
 
         return self
 
