@@ -266,15 +266,19 @@ class CleanMask(object):
         return self
 
     def make_mask(self, method="dilate", compute_slicewise=False,
-                  smooth=False, verbose=False):
+                  smooth=False, kern_size='beam', pixscale=None,
+                  verbose=False):
 
         self.make_initial_masks(compute_slicewise=compute_slicewise)
 
         if method == "dilate":
-            self.dilate_into_low()
+            self.dilate_into_low(verbose=verbose)
         elif method == "remove small":
-            self.remove_high_components()
+            self.remove_high_components(pixscale=pixscale, verbose=verbose)
         else:
             raise TypeError("method must be 'dilate' or 'remove small'.")
+
+        if smooth:
+            self._smooth_it(kern_size=kern_size, pixscale=pixscale)
 
         return self
