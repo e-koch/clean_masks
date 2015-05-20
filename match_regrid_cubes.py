@@ -119,6 +119,10 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
     else:
         regrid_hdr = _regrid_header(hdr1, new_hdr2)
 
+    # If it's a binary mask, force to dtype '>i2' to save space
+    if is_binary_mask:
+        regrid_img = regrid_img.astype('>i2')
+
     if save_output:
         hdu = fits.PrimaryHDU(regrid_img, header=regrid_hdr)
         hdu.writeto(save_name+".fits")
