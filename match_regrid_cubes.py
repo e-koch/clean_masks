@@ -192,4 +192,11 @@ if __name__ == '__main__':
     file2 = str(sys.argv[2])
     save_name = str(sys.argv[3])
 
-    match_regrid(file1, file2, save_output=True, save_name=save_name)
+    is_binary_mask = sys.argv[4]
+    if is_binary_mask == 'T':
+        is_binary_mask = True
+    else:
+        is_binary_mask = False
+
+    match_regrid(file1, file2, save_output=True, save_name=save_name,
+                 is_binary_mask=is_binary_mask)
