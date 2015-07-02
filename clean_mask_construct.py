@@ -15,7 +15,6 @@ Routines for constructing a robust clean mask.
 '''
 
 
-
 class CleanMask(object):
     """
     Creates a robust CLEAN mask.
@@ -132,13 +131,13 @@ class CleanMask(object):
     def to_RadioMask(self, which_mask='final'):
 
         if which_mask is 'final':
-            return RadioMask(self._mask, wcs=None)  ## Load in WCS somehow
+            return RadioMask(self._mask, wcs=None)  # Load in WCS somehow
 
         elif which_mask is 'low':
-            return RadioMask(self._low_mask, wcs=None)  ## Load in WCS somehow
+            return RadioMask(self._low_mask, wcs=None)  # Load in WCS somehow
 
         elif which_mask is 'high':
-            return RadioMask(self._high_mask, wcs=None)  ## Load in WCS somehow
+            return RadioMask(self._high_mask, wcs=None)  # Load in WCS somehow
 
         else:
             raise TypeError("which_mask must be 'final', 'low', or 'high'.")
