@@ -30,9 +30,15 @@ class CleanMask(object):
         Higher sigma cut.
     beam : Beam
         Object defining the beam.
+    pbcoverage : numpy.ndarray
+        Defines the beam coverage over the image for mosaics.
+    pb_thresh : float
+        Defines a threshold between 0 and 1 to remove regions with low beam
+        coverage in the image.
 
     """
-    def __init__(self, cube, low_cut, high_cut, beam=None):
+    def __init__(self, cube, low_cut, high_cut, beam=None, pbcoverage=None,
+                 pb_thresh=0.7):
         super(CleanMask, self).__init__()
         self.cube = cube
         self.low_cut = low_cut
@@ -44,6 +50,19 @@ class CleanMask(object):
             self.beam = None
         else:
             raise TypeError("beam must be a Beam object or None.")
+
+        if pbcoverage is not None:
+            if not isinstance(pbcoverage, np.ndarray):
+                raise TypeError("pbcoverage must be a numpy array.")
+
+            if pb_thresh < 0.0 or pb_thresh > 1.0:
+                raise Warning("pb_thresh must be between 0 and 1.")
+
+            self.pb_mask = pbcoverage > pb_thresh
+            self.pb_flag = True
+        else:
+            self.pb_mask = np.ones_like(cube)
+            self.pb_flag = False
 
         self.vel_slices = self.cube.shape[0]  # Generalize with WCS object
 
@@ -280,5 +299,8 @@ class CleanMask(object):
 
         if smooth:
             self._smooth_it(kern_size=kern_size, pixscale=pixscale)
+
+        if self.pb_flag:
+            self._mask *= self.pb_mask
 
         return self
