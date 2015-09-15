@@ -204,6 +204,9 @@ def _restore_shape(cube, zoom_factor, spec_axis=1, order=3,
             else:
                 full_cube = np.hstack((full_cube, plane))
 
+        if temp_clobber:
+            shutil.rmtree(temp_folder, ignore_errors=True)
+
     assert cube.shape == full_cube.shape
 
     return full_cube
