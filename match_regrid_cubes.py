@@ -80,7 +80,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
         for i in range(1, naxes+1):
             if 'VRAD' in hdr1['CTYPE'+str(i)]:
                 spec_axis = i - naxes + 2
-                wcs_spec_axis = i
+                wcs_spec_axis = i - 1
                 break
 
     # Make sure slices match axes
@@ -93,27 +93,24 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
     if spec_slice is not None:
         assert len(spec_slice) == 2
 
-        step = slices[wcs_spec_axis].step
+        step = slices[spec_axis].step
 
-        slices[wcs_spec_axis] = \
+        slices[spec_axis] = \
             slice(spec_slice[0], spec_slice[1], step)
 
     # Assume numpy convention for axes
     new_wcs = WCS(hdr2).slice(slices)
 
     shape1 = fits1[0].data.shape
-    shape2 = fits2[0].data.shape
-
-    # Change shape to match degradation
-    deg_shape2 = tuple(i/j for i, j in zip(shape2, degrade_factor))
+    shape2 = fits2[0].data[slices].shape
 
     fits2.close()
 
     new_hdr2 = new_wcs.to_header()
 
-    for i, s in enumerate(deg_shape2[::-1]):
+    for i, s in enumerate(shape2[::-1]):
         new_hdr2['NAXIS'+str(i+1)] = s
-    new_hdr2['NAXIS'] = len(deg_shape2)
+    new_hdr2['NAXIS'] = len(shape2)
 
     # Do the matching
     if len(shape1) == 2:
