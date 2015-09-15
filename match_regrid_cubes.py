@@ -14,10 +14,47 @@ from astropy.wcs import WCS
 def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
                  spec_slice=None, degrade_factor=(1, 1, 8, 8),
                  restore_dim=True, is_binary_mask=False, remove_hist=True,
-                 save_output=False, save_name='new_img'):
+                 save_output=False, save_name='new_img',
+                 temp_save_channels=False):
     '''
     Input two fits filenames. The output will be the projection of file 1
     onto file 2
+
+    Parameters
+    ----------
+    filename1 : str
+        FITS file to regrid
+    filename2 : str
+        FITS file to regrid to
+    reappend_dim : bool, optional
+        If there's extra dimensions in the data (ie. Stokes I, etc..), add
+        them back into the regridded version.
+    spec_axis : int, optional
+        Specify which axis is the spectral axis. Tries to find it
+        automatically if none is specified.
+    spec_slice : slice, optional
+        Apply a slice in the spectral dimension.
+    degrade_factor : tuple, optional
+        Apply factor to reduce dimension by. Requires the same amount of
+        elements as number of axes in the data. Uses numpy convention,
+        NOT WCS.
+    restore_dim : bool, optional
+        Restore to the original shape based on degrade_factor.
+    is_binary_mask : bool, optional
+        Enable is regridding a mask.
+    remove_hist : bool, optional
+        Remove HISTORY from the output header.
+    save_output : bool, optional
+        Saves as a FITS file. When disabled, returns an hdu with the regridded
+        cube and header.
+    save_name : str, optional
+        Name of outputted FITS file. Defaults to 'new_img'.
+    temp_save_channels : bool, optional
+        Restoring the shape of the regridded cube is memory intensive. This
+        saves the channels as temporary npy files to circumvent the issue. If
+        your cube is truly huge, this probably won't help as the channels need
+        to be reloaded to create the whole cube.
+
     '''
 
     fits1 = fits.open(filename1)
@@ -115,7 +152,8 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
     if restore_dim:
         regrid_hdr = _regrid_header(hdr1, hdr2)
         regrid_img = _restore_shape(regrid_img, degrade_factor,
-                                    spec_axis=spec_axis, order=order)
+                                    spec_axis=spec_axis, order=order,
+                                    temp_save_channels=temp_save_channels)
     else:
         regrid_hdr = _regrid_header(hdr1, new_hdr2)
 
