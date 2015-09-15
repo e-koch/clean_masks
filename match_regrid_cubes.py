@@ -219,7 +219,7 @@ def _restore_shape(cube, zoom_factor, spec_axis=1, order=3,
 
         if temp_save_channels:
 
-            np.save(os.path.join(temp_folder, '/temp_channel_'+str(v)+".npy"),
+            np.save(os.path.join(temp_folder, 'temp_channel_'+str(v)+".npy"),
                     zoom_plane)
         else:
             if v == 0:
@@ -280,5 +280,5 @@ if __name__ == '__main__':
         is_binary_mask = False
 
     match_regrid(file1, file2, save_output=True, save_name=save_name,
-                 is_binary_mask=is_binary_mask, temp_save_channels=False,
-                 spec_slice=[600, 1850], restore_dim=False)
+                 is_binary_mask=is_binary_mask, temp_save_channels=True,
+                 spec_slice=[670, 1901], restore_dim=True)
