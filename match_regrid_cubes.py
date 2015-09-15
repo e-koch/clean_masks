@@ -163,7 +163,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
 
     if save_output:
         hdu = fits.PrimaryHDU(regrid_img, header=regrid_hdr)
-        hdu.writeto(save_name+".fits")
+        hdu.writeto(save_name.rstrip(".fits")+".fits")
 
     else:
         return fits.PrimaryHDU(regrid_img, header=regrid_hdr)
@@ -283,4 +283,5 @@ if __name__ == '__main__':
         is_binary_mask = False
 
     match_regrid(file1, file2, save_output=True, save_name=save_name,
-                 is_binary_mask=is_binary_mask)
+                 is_binary_mask=is_binary_mask, temp_save_channels=False,
+                 spec_slice=[600, 1850], restore_dim=False)
