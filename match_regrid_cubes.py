@@ -232,7 +232,7 @@ def _restore_shape(cube, zoom_factor, spec_axis=1, order=3,
 
             plane = \
                 np.load(os.path.join(temp_folder,
-                                     '/temp_channel_'+str(v)+".npy"))
+                                     'temp_channel_'+str(v)+".npy"))
 
             if v == 0:
                 full_cube = plane
