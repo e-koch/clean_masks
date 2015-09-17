@@ -331,7 +331,7 @@ class Cube(object):
         is_array = isinstance(input_cube, np.ndarray)
         is_hdu = isinstance(input_cube, astropy.io.fits.hdu.image.PrimaryHDU)
 
-        if not is_array or not is_hdu:
+        if not is_array and not is_hdu:
             raise TypeError("cube must be a numpy array or an astropy "
                             "PrimaryHDU. Input was of type " +
                             str(type(input_cube)))
