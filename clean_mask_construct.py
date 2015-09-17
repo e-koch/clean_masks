@@ -81,7 +81,7 @@ class CleanMask(object):
         Calculate the initial masks.
         '''
 
-        if compute_slicewise:
+        if compute_slicewise or self.cube.huge_flag:
             sums = 0.0
             num_finite = 0
 
