@@ -7,6 +7,7 @@ from radio_beam import Beam
 import astropy.units as u
 from astropy.io import fits
 from astropy.extern import six
+import astropy
 
 '''
 Routines for constructing a robust clean mask.
@@ -325,10 +326,10 @@ class Cube(object):
     def cube(self, input_cube):
 
         if isinstance(input_cube, six.string_types):
-            input_cube = _load_fits(input_cube)
+            input_cube = self._load_fits(input_cube)
 
         is_array = isinstance(input_cube, np.ndarray)
-        is_hdu = isinstance(input_cube, fits.hdu.image.PrimaryHDU)
+        is_hdu = isinstance(input_cube, astropy.io.fits.hdu.image.PrimaryHDU)
 
         if not is_array or not is_hdu:
             raise TypeError("cube must be a numpy array or an astropy "
