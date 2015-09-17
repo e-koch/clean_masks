@@ -337,10 +337,26 @@ class Cube(object):
                             str(type(input_cube)))
 
     def __getitem__(self, view):
-        if hasattr(self.cube, 'data'):
+        if self.is_hdu:
             return self.cube.data[view]
         else:
             return self.cube[view]
 
     def _load_fits(self, fitsfile, ext=0):
         return fits.open(fitsfile)[ext]
+
+    def _is_hdu(self):
+        if hasattr(self.cube, 'data'):
+            return True
+        return False
+
+    @property
+    def is_hdu(self):
+        return self._is_hdu
+
+    @property
+    def shape(self):
+        if self.is_hdu:
+            return self.cube.data.shape
+        else:
+            return self.cube.shape
