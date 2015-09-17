@@ -5,6 +5,7 @@ import scipy.ndimage as nd
 from signal_id import RadioMask, Noise
 from radio_beam import Beam
 import astropy.units as u
+from astropy.io import fits
 
 '''
 Routines for constructing a robust clean mask.
@@ -69,6 +70,22 @@ class CleanMask(object):
         self._high_mask = None
 
         self._mask = None
+
+    @property
+    def cube(self):
+        return self._cube
+
+    @cube.setter
+    def cube(self, input_cube):
+        is_array = isinstance(input_cube, np.ndarray)
+        is_hdu = isinstance(input_cube, fits.hdu.image.PrimaryHDU)
+
+        if not is_array or not is_hdu:
+            raise TypeError("cube must be a numpy array or an astropy "
+                            "PrimaryHDU. Input was of type " +
+                            str(type(input_cube)))
+
+        self._cube = input_cube
 
     def make_initial_masks(self, compute_slicewise=False):
         '''
