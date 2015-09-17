@@ -63,7 +63,7 @@ class CleanMask(object):
             self.pb_mask = pbcoverage > pb_thresh
             self.pb_flag = True
         else:
-            self.pb_mask = np.ones_like(cube)
+            self.pb_mask = np.ones_like(cube, dtype=bool)
             self.pb_flag = False
 
         self.vel_slices = self.cube.shape[0]  # Generalize with WCS object
@@ -104,8 +104,8 @@ class CleanMask(object):
             low_thresh = mean + self.low_cut * std
             high_thresh = mean + self.high_cut * std
 
-            self._low_mask = np.zeros_like(self.cube)
-            self._high_mask = np.zeros_like(self.cube)
+            self._low_mask = np.zeros_like(self.cube, dtype=bool)
+            self._high_mask = np.zeros_like(self.cube, dtype=bool)
 
             for i in range(self.vel_slices):
                 self._low_mask[i, :, :] = self.cube[i, :, :] > low_thresh
@@ -148,7 +148,6 @@ class CleanMask(object):
 
         else:
             raise TypeError("which_mask must be 'final', 'low', or 'high'.")
-
 
     def dilate_into_low(self, max_iter=100, verbose=False):
         '''
