@@ -1,5 +1,5 @@
 
-from spectral_cube import SpectralCube
+from spectral_cube.cube_utils import is_huge
 import numpy as np
 import scipy.ndimage as nd
 from signal_id import RadioMask, Noise
@@ -312,9 +312,14 @@ class CleanMask(object):
 
 class Cube(object):
     """docstring for Cube"""
-    def __init__(self, cube):
+    def __init__(self, cube, huge_flag=None):
 
         self.cube = cube
+
+        if huge_flag is not None:
+            self.huge_flag = huge_flag
+        else:
+            self.huge_flag = is_huge(self.cube)
 
     @property
     def cube(self):
@@ -360,6 +365,13 @@ class Cube(object):
             return self.cube.data.shape
         else:
             return self.cube.shape
+
+    @property
+    def size(self):
+        if self.is_hdu:
+            return self.cube.data.size
+        else:
+            return self.cube.size
 
     def __gt__(self, value):
         return self[:] > value
