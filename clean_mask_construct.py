@@ -53,6 +53,9 @@ class CleanMask(object):
             raise TypeError("beam must be a Beam object or None.")
 
         if pbcoverage is not None:
+            if isinstance(pbcoverage, six.string_types):
+                pbcoverage = fits.getdata(pbcoverage)
+
             if not isinstance(pbcoverage, np.ndarray):
                 raise TypeError("pbcoverage must be a numpy array.")
 
