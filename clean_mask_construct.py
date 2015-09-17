@@ -6,6 +6,7 @@ from signal_id import RadioMask, Noise
 from radio_beam import Beam
 import astropy.units as u
 from astropy.io import fits
+from astropy.extern import six
 
 '''
 Routines for constructing a robust clean mask.
@@ -322,6 +323,10 @@ class Cube(object):
 
     @cube.setter
     def cube(self, input_cube):
+
+        if isinstance(input_cube, six.string_types):
+            input_cube = _load_fits(input_cube)
+
         is_array = isinstance(input_cube, np.ndarray)
         is_hdu = isinstance(input_cube, fits.hdu.image.PrimaryHDU)
 
@@ -335,3 +340,6 @@ class Cube(object):
             return self.cube.data[view]
         else:
             return self.cube[view]
+
+    def _load_fits(self, fitsfile, ext=0):
+        return fits.open(fitsfile)[ext]
