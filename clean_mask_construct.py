@@ -270,22 +270,21 @@ class CleanMask(object):
             if pixscale is None:
                 raise TypeError("pixscale must be specified to use beamarea")
 
-            major = self.major.to(u.deg).value/pixscale
-            minor = self.minor.to(u.deg).value/pixscale
+            footprint = self.beam.as_tophat_kernel(pixscale)
 
         elif isinstance(kern_size, float) or isinstance(kern_size, int):
             major = kern_size
             minor = kern_size
+            footprint = np.ones((major, minor))
         else:
             Warning("kern_size must be 'beam', or a float or integer.")
 
         from scipy.ndimage import median_filter
 
-
         for i in range(self.vel_slices):
             self._mask[i, :, :] = \
                 median_filter(self._mask[i, :, :],
-                              footprint=np.ones((major, minor)))
+                              footprint=footprint)
 
         return self
 
@@ -373,4 +372,3 @@ class Cube(object):
 
     def __le__(self, value):
         return self[:] <= value
-
