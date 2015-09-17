@@ -336,6 +336,8 @@ class Cube(object):
                             "PrimaryHDU. Input was of type " +
                             str(type(input_cube)))
 
+        self._cube = input_cube
+
     def __getitem__(self, view):
         if self.is_hdu:
             return self.cube.data[view]
