@@ -112,8 +112,8 @@ class CleanMask(object):
                 self._high_mask[i, :, :] = self.cube[i, :, :] > high_thresh
 
         else:
-            mean = np.nanmean(self.cube)
-            std = np.nanstd(self.cube)
+            mean = np.nanmean(self.cube[:])
+            std = np.nanstd(self.cube[:])
 
             low_thresh = mean + self.low_cut * std
             high_thresh = mean + self.high_cut * std
@@ -362,3 +362,16 @@ class Cube(object):
             return self.cube.data.shape
         else:
             return self.cube.shape
+
+    def __gt__(self, value):
+        return self[:] > value
+
+    def __lt__(self, value):
+        return self[:] < value
+
+    def __ge__(self, value):
+        return self[:] >= value
+
+    def __le__(self, value):
+        return self[:] <= value
+
