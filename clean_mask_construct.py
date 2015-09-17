@@ -95,8 +95,10 @@ class CleanMask(object):
 
             var = 0.0
 
-            for val in self.cube[np.isfinite(self.cube)]:
-                var += np.np.power(val - mean, 2)
+            for i in range(self.vel_slices):
+                plane = self.cube[i, :, :]
+                for val in plane[np.isfinite(plane)]:
+                    var += np.power(val - mean, 2)
 
             std = np.sqrt(var) / (num_finite - 1)
 
