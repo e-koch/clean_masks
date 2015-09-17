@@ -22,7 +22,7 @@ class CleanMask(object):
 
     Parameters
     ----------
-    cube : numpy.ndarray
+    cube : numpy.ndarray or astropy PrimaryHDU
 
     low_cut : float or int
         Lower sigma cut.
@@ -40,7 +40,7 @@ class CleanMask(object):
     def __init__(self, cube, low_cut, high_cut, beam=None, pbcoverage=None,
                  pb_thresh=0.7):
         super(CleanMask, self).__init__()
-        self.cube = cube
+        self._cube = cube
         self.low_cut = low_cut
         self.high_cut = high_cut
 
@@ -73,19 +73,7 @@ class CleanMask(object):
 
     @property
     def cube(self):
-        return self._cube
-
-    @cube.setter
-    def cube(self, input_cube):
-        is_array = isinstance(input_cube, np.ndarray)
-        is_hdu = isinstance(input_cube, fits.hdu.image.PrimaryHDU)
-
-        if not is_array or not is_hdu:
-            raise TypeError("cube must be a numpy array or an astropy "
-                            "PrimaryHDU. Input was of type " +
-                            str(type(input_cube)))
-
-        self._cube = input_cube
+        return Cube(self._cube)
 
     def make_initial_masks(self, compute_slicewise=False):
         '''
@@ -320,3 +308,30 @@ class CleanMask(object):
             self._mask *= self.pb_mask
 
         return self
+
+
+class Cube(object):
+    """docstring for Cube"""
+    def __init__(self, cube):
+
+        self.cube = cube
+
+    @property
+    def cube(self):
+        return self._cube
+
+    @cube.setter
+    def cube(self, input_cube):
+        is_array = isinstance(input_cube, np.ndarray)
+        is_hdu = isinstance(input_cube, fits.hdu.image.PrimaryHDU)
+
+        if not is_array or not is_hdu:
+            raise TypeError("cube must be a numpy array or an astropy "
+                            "PrimaryHDU. Input was of type " +
+                            str(type(input_cube)))
+
+    def __getitem__(self, view):
+        if hasattr(self.cube, 'data'):
+            return self.cube.data[view]
+        else:
+            return self.cube[view]
