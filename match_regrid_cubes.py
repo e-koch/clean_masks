@@ -116,6 +116,10 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
     if len(shape1) == 2:
         regrid_img = ft.hcongrid.hcongrid(fits1[0].data, fits1[0].header, hdr2)
     else:
+        if is_binary_mask:
+            data = fits1[0].data.astype('bool')
+        else:
+            data = fits1[0].data
         regrid_img = ft.regrid_cube(fits1[0].data, hdr1, new_hdr2,
                                     specaxes=(2, 2))
         regrid_img = regrid_img.reshape((1,)+regrid_img.shape)
