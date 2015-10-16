@@ -112,7 +112,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
             data = fits1[0].data.astype('bool')
         else:
             data = fits1[0].data
-        regrid_img = ft.regrid_cube(data, hdr1, new_hdr2)
+        regrid_img = ft.regrid_cube(data, hdr1, new_hdr2, specaxes=(2, 2))
         regrid_img = regrid_img.reshape((1,)+regrid_img.shape)
 
     if is_binary_mask:
@@ -143,7 +143,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
 
     # If is_huge is enabled, create the empty FITS file
     if is_huge:
-        from huge_fits.write_huge_fits import create_huge_fits
+        from write_huge_fits import create_huge_fits
         create_huge_fits(full_shape, save_name.rstrip(".fits")+".fits")
 
     regrid_hdr = _regrid_header(hdr1, hdr2)
@@ -161,14 +161,15 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
 
         plane = regrid_img[vel_slice]
 
-        restored_plane = _restore_shape(plane, degrade_factor)
+        restored_plane = _restore_shape(plane, degrade_factor, order=order)
 
         # If it's a binary mask, force to dtype '>i2' to save space
         if is_binary_mask:
             restored_plane = restored_plane.astype('>i2')
 
         if is_huge:
-            output_fits = fits.open(save_name.rstrip(".fits")+".fits")
+            output_fits = fits.open(save_name.rstrip(".fits")+".fits",
+                                    mode='update')
             output_fits[0].data[vel_slice] = restored_plane
 
         else:
