@@ -15,8 +15,7 @@ from scipy.ndimage import zoom
 def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
                  spec_slice=None, degrade_factor=(1, 1, 8, 8),
                  is_binary_mask=False, remove_hist=True,
-                 save_output=False, save_name='new_img',
-                 temp_save_channels=False):
+                 save_output=False, save_name='new_img', is_huge=True):
     '''
     Input two fits filenames. The output will be the projection of file 1
     onto file 2
@@ -93,7 +92,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
     # Assume numpy convention for axes
     new_wcs = WCS(hdr2).slice(slices)
 
-    shape1 = fits1[0].data.shape
+    shape1 = fits1[0].shape
     shape2 = fits2[0].data[slices].shape
 
     fits2.close()
@@ -141,10 +140,30 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
     else:
         order = 3
 
+    # If is_huge is enabled, create the empty FITS file
+    if is_huge:
+        from huge_fits.write_huge_fits import create_huge_fits
+        create_huge_fits()
+
     regrid_hdr = _regrid_header(hdr1, hdr2)
-    regrid_img = _restore_shape(regrid_img, degrade_factor,
-                                spec_axis=spec_axis, order=order,
-                                temp_save_channels=temp_save_channels)
+
+    naxis = len(regrid_img.shape)
+
+    vel_shape = regrid_img.shape[spec_axis]
+
+    vel_slice = [slice(None)] * naxis
+
+    for v in np.arange(vel_shape):
+        print 'Channel %s/%s' % (v+1, vel_shape)
+
+        vel_slice[spec_axis] = slice(v, v+1)
+
+        plane = regrid_img[vel_slice]
+
+        restored_plane = _restore_shape()
+
+        if is_huge:
+            pass
 
     # If it's a binary mask, force to dtype '>i2' to save space
     if is_binary_mask:
@@ -158,43 +177,25 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
         return fits.PrimaryHDU(regrid_img, header=regrid_hdr)
 
 
-def _restore_shape(cube, zoom_factor, spec_axis=1, order=3,
-                   verbose=True):
+def _restore_shape(plane, zoom_factor, order=3):
     '''
-    Interpolates the cube by channel to the given shape. Assumes
-    velocity dimension has not been degraded.
+    Interpolates the array to the given shape.
     '''
 
-    naxis = len(cube.shape)
+    if ~np.isfinite(plane).any():
+        bad_pix = ~np.isfinite(plane)
+        plane[bad_pix] = 0
 
-    vel_shape = cube.shape[spec_axis]
+    zoom_plane = zoom(plane, zoom_factor, order=order)
 
-    vel_slice = [slice(None)] * naxis
+    if ~np.isfinite(plane).any():
+        zoom_bad_pix = zoom(bad_pix, zoom_factor, order=0)
+        zoom_plane[zoom_bad_pix] = np.NaN
 
-    for v in np.arange(vel_shape):
-        print 'Channel %s/%s' % (v+1, vel_shape)
-        vel_slice[spec_axis] = slice(v, v+1)
-
-        plane = cube[vel_slice]
-
-        if ~np.isfinite(plane).any():
-            bad_pix = ~np.isfinite(plane)
-            plane[bad_pix] = 0
-
-        zoom_plane = zoom(plane, zoom_factor, order=order)
-
-        if ~np.isfinite(plane).any():
-            zoom_bad_pix = zoom(bad_pix, zoom_factor, order=0)
-            zoom_plane[zoom_bad_pix] = np.NaN
-
-        if v == 0:
-            full_cube = zoom_plane
-        else:
-            full_cube = np.hstack((full_cube, zoom_plane))
-
-    assert cube.shape == full_cube.shape
-
-    return full_cube
+    if v == 0:
+        full_cube = zoom_plane
+    else:
+        full_cube = np.hstack((full_cube, zoom_plane))
 
 
 def _regrid_header(header1, header2):
