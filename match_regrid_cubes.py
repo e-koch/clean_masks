@@ -238,5 +238,4 @@ if __name__ == '__main__':
         is_binary_mask = False
 
     match_regrid(file1, file2, save_output=True, save_name=save_name,
-                 is_binary_mask=is_binary_mask, temp_save_channels=True,
-                 spec_slice=[670, 1901], restore_dim=True)
+                 is_binary_mask=is_binary_mask)  # ,spec_slice=[670, 1901])
