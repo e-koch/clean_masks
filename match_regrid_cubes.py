@@ -72,13 +72,8 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
 
     # Try finding the spectral axis
     if spec_axis is None:
-        naxes = hdr1['NAXIS']
-
-        for i in range(1, naxes+1):
-            if 'VRAD' in hdr1['CTYPE'+str(i)]:
-                spec_axis = naxes - i
-                wcs_spec_axis = i - 1
-                break
+        wcs1 = WCS(hdr1)
+        spec_axis = wcs1.wcs.naxis - 1 - wcs1.wcs.spec
 
     # Make sure slices match axes
     if hdr2['NAXIS'] != len(degrade_factor):
