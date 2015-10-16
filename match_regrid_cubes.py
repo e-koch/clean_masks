@@ -113,6 +113,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
         else:
             data = fits1[0].data
         regrid_img = ft.regrid_cube(data, hdr1, new_hdr2, specaxes=(2, 2))
+        # NOT GENERALIZED
         regrid_img = regrid_img.reshape((1,)+regrid_img.shape)
 
     if is_binary_mask:
