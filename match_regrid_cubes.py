@@ -94,6 +94,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
 
     shape1 = fits1[0].shape
     shape2 = fits2[0].data[slices].shape
+    full_shape = fits2[0].shape
 
     fits2.close()
 
@@ -143,7 +144,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
     # If is_huge is enabled, create the empty FITS file
     if is_huge:
         from huge_fits.write_huge_fits import create_huge_fits
-        create_huge_fits()
+        create_huge_fits(full_shape, save_name.rstrip(".fits")+".fits")
 
     regrid_hdr = _regrid_header(hdr1, hdr2)
 
