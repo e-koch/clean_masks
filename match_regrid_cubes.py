@@ -161,21 +161,30 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
 
         plane = regrid_img[vel_slice]
 
-        restored_plane = _restore_shape()
+        restored_plane = _restore_shape(plane, degrade_factor)
+
+        # If it's a binary mask, force to dtype '>i2' to save space
+        if is_binary_mask:
+            restored_plane = restored_plane.astype('>i2')
 
         if is_huge:
-            pass
+            output_fits = fits.open(save_name.rstrip(".fits")+".fits")
+            output_fits[0].data[vel_slice] = restored_plane
 
-    # If it's a binary mask, force to dtype '>i2' to save space
-    if is_binary_mask:
-        regrid_img = regrid_img.astype('>i2')
+        else:
+            # Create the cube in memory
+            if v == 0:
+                full_cube = restored_plane
+            else:
+                full_cube = np.hstack((full_cube, restored_plane))
 
-    if save_output:
-        hdu = fits.PrimaryHDU(regrid_img, header=regrid_hdr)
-        hdu.writeto(save_name.rstrip(".fits")+".fits")
+    if not is_huge:
+        if save_output:
+            hdu = fits.PrimaryHDU(full_cube, header=regrid_hdr)
+            hdu.writeto(save_name.rstrip(".fits")+".fits")
 
-    else:
-        return fits.PrimaryHDU(regrid_img, header=regrid_hdr)
+        else:
+            return fits.PrimaryHDU(full_cube, header=regrid_hdr)
 
 
 def _restore_shape(plane, zoom_factor, order=3):
@@ -193,10 +202,7 @@ def _restore_shape(plane, zoom_factor, order=3):
         zoom_bad_pix = zoom(bad_pix, zoom_factor, order=0)
         zoom_plane[zoom_bad_pix] = np.NaN
 
-    if v == 0:
-        full_cube = zoom_plane
-    else:
-        full_cube = np.hstack((full_cube, zoom_plane))
+    return zoom_plane
 
 
 def _regrid_header(header1, header2):
