@@ -49,11 +49,8 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
         cube and header.
     save_name : str, optional
         Name of outputted FITS file. Defaults to 'new_img'.
-    temp_save_channels : bool, optional
-        Restoring the shape of the regridded cube is memory intensive. This
-        saves the channels as temporary npy files to circumvent the issue. If
-        your cube is truly huge, this probably won't help as the channels need
-        to be reloaded to create the whole cube.
+    is_huge : bool, optional
+        Uses huge_fits.write_huge_fits to save larger-than-memory arrays.
 
     '''
 
@@ -79,7 +76,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
 
         for i in range(1, naxes+1):
             if 'VRAD' in hdr1['CTYPE'+str(i)]:
-                spec_axis = i - naxes + 2
+                spec_axis = naxes - i
                 wcs_spec_axis = i - 1
                 break
 
