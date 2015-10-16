@@ -9,11 +9,12 @@ import FITS_tools as ft
 from astropy.io import fits
 import numpy as np
 from astropy.wcs import WCS
+from scipy.ndimage import zoom
 
 
 def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
                  spec_slice=None, degrade_factor=(1, 1, 8, 8),
-                 restore_dim=True, is_binary_mask=False, remove_hist=True,
+                 is_binary_mask=False, remove_hist=True,
                  save_output=False, save_name='new_img',
                  temp_save_channels=False):
     '''
@@ -38,8 +39,6 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
         Apply factor to reduce dimension by. Requires the same amount of
         elements as number of axes in the data. Uses numpy convention,
         NOT WCS.
-    restore_dim : bool, optional
-        Restore to the original shape based on degrade_factor.
     is_binary_mask : bool, optional
         Enable is regridding a mask.
     remove_hist : bool, optional
@@ -141,13 +140,10 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
     else:
         order = 3
 
-    if restore_dim:
-        regrid_hdr = _regrid_header(hdr1, hdr2)
-        regrid_img = _restore_shape(regrid_img, degrade_factor,
-                                    spec_axis=spec_axis, order=order,
-                                    temp_save_channels=temp_save_channels)
-    else:
-        regrid_hdr = _regrid_header(hdr1, new_hdr2)
+    regrid_hdr = _regrid_header(hdr1, hdr2)
+    regrid_img = _restore_shape(regrid_img, degrade_factor,
+                                spec_axis=spec_axis, order=order,
+                                temp_save_channels=temp_save_channels)
 
     # If it's a binary mask, force to dtype '>i2' to save space
     if is_binary_mask:
@@ -162,8 +158,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
 
 
 def _restore_shape(cube, zoom_factor, spec_axis=1, order=3,
-                   verbose=True, temp_save_channels=False,
-                   temp_clobber=True):
+                   verbose=True):
     '''
     Interpolates the cube by channel to the given shape. Assumes
     velocity dimension has not been degraded.
@@ -172,27 +167,6 @@ def _restore_shape(cube, zoom_factor, spec_axis=1, order=3,
     naxis = len(cube.shape)
 
     vel_shape = cube.shape[spec_axis]
-
-    if temp_save_channels:
-        import os
-        temp_folder = 'restore_shape_temp'
-        try:
-            os.mkdir(temp_folder)
-        except IOError as e:
-            import warnings
-            warnings.warn("Temporary folder restore_shape_temp already exists "
-                          "in this path.")
-            if temp_clobber:
-                warnings.warn("I'M REMOVING EVERYTHING IN THE TEMPORARY FOLDER")
-                import shutil
-                shutil.rmtree(temp_folder, ignore_errors=True)
-                os.mkdir(temp_folder)
-            else:
-                raise e('Quitting because restore_shape_temp already exists. '
-                        'Remove the folder, or set temp_clobber=True to auto '
-                        'remove')
-
-    from scipy.ndimage import zoom
 
     vel_slice = [slice(None)] * naxis
 
@@ -212,30 +186,10 @@ def _restore_shape(cube, zoom_factor, spec_axis=1, order=3,
             zoom_bad_pix = zoom(bad_pix, zoom_factor, order=0)
             zoom_plane[zoom_bad_pix] = np.NaN
 
-        if temp_save_channels:
-
-            np.save(os.path.join(temp_folder, 'temp_channel_'+str(v)+".npy"),
-                    zoom_plane)
+        if v == 0:
+            full_cube = zoom_plane
         else:
-            if v == 0:
-                full_cube = zoom_plane
-            else:
-                full_cube = np.hstack((full_cube, zoom_plane))
-
-    if temp_save_channels:
-        for v in np.arange(vel_shape):
-
-            plane = \
-                np.load(os.path.join(temp_folder,
-                                     'temp_channel_'+str(v)+".npy"))
-
-            if v == 0:
-                full_cube = plane
-            else:
-                full_cube = np.hstack((full_cube, plane))
-
-        if temp_clobber:
-            shutil.rmtree(temp_folder, ignore_errors=True)
+            full_cube = np.hstack((full_cube, zoom_plane))
 
     assert cube.shape == full_cube.shape
 
