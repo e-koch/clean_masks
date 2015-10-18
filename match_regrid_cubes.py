@@ -234,7 +234,7 @@ if __name__ == '__main__':
     save_name = str(sys.argv[3])
 
     is_binary_mask = sys.argv[4]
-    if is_binary_mask == 'T':
+    if is_binary_mask == 'T' or is_binary_mask == "True":
         is_binary_mask = True
     else:
         is_binary_mask = False
