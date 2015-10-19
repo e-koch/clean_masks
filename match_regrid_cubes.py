@@ -142,12 +142,17 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
     else:
         order = 3
 
+    regrid_hdr = _regrid_header(hdr1, hdr2)
+
     # If is_huge is enabled, create the empty FITS file
     if is_huge:
         from write_huge_fits import create_huge_fits
         create_huge_fits(full_shape, save_name.rstrip(".fits")+".fits")
-
-    regrid_hdr = _regrid_header(hdr1, hdr2)
+        output_fits = fits.open(save_name.rstrip(".fits")+".fits",
+                                mode='update')
+        output_fits[0].header = regrid_hdr
+        output_fits.flush()
+        output_fits.close()
 
     naxis = len(regrid_img.shape)
 
