@@ -177,6 +177,8 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
             output_fits = fits.open(save_name.rstrip(".fits")+".fits",
                                     mode='update')
             output_fits[0].data[vel_slice] = restored_plane
+            output_fits.flush()
+            output_fits.close()
 
         else:
             # Create the cube in memory
