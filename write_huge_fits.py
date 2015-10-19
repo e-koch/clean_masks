@@ -53,9 +53,12 @@ def create_huge_fits(shape, filename, header=None, nblocks=4):
     # Make hdu and pad header with enough header blocks
     hdu = fits.PrimaryHDU(data=inp_data)
 
-    hdr = hdu.header
-    while len(hdr) < (36 * nblocks - 1):
-        hdr.append()
+    if header is not None:
+        hdr = hdu.header
+        while len(hdr) < (36 * nblocks - 1):
+            hdr.append()
+    else:
+        hdu.header = header
 
     # Set the actual shape in the header
     hdr["NAXIS"] = naxis
