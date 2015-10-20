@@ -11,7 +11,7 @@ import numpy as np
 import os
 
 
-def create_huge_fits(shape, filename, header=None, nblocks=4):
+def create_huge_fits(shape, filename, header=None, nblocks=2):
     '''
     Creates a massive empty FITS file that can be then written to
     in slice (or something that doesn't require reading it all in).
@@ -53,7 +53,7 @@ def create_huge_fits(shape, filename, header=None, nblocks=4):
     # Make hdu and pad header with enough header blocks
     hdu = fits.PrimaryHDU(data=inp_data)
 
-    if header is not None:
+    if header is None:
         hdr = hdu.header
         while len(hdr) < (36 * nblocks - 1):
             hdr.append()
