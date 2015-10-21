@@ -173,6 +173,9 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
 
         restored_plane = _restore_shape(plane, degrade_factor, order=order)
 
+        restored_plane = restored_plane[:, :, ::-1, :]
+        restored_plane = restored_plane[:, :, :, ::-1]
+
         # If it's a binary mask, force to dtype '>i2' to save space
         if is_binary_mask:
             restored_plane = restored_plane.astype('>i2')
@@ -251,4 +254,4 @@ if __name__ == '__main__':
         is_binary_mask = False
 
     match_regrid(file1, file2, save_output=True, save_name=save_name,
-                 is_binary_mask=is_binary_mask, spec_slice=[0, 10])
+                 is_binary_mask=is_binary_mask)  # , spec_slice=[0, 800])
