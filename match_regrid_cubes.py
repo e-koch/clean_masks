@@ -80,6 +80,7 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
                           dimensions in '+filename2)
 
     slices = [slice(None, None, i) for i in degrade_factor]
+    final_slices = [slice(None)] * naxes
 
     if spec_slice is not None:
         assert len(spec_slice) == 2
@@ -89,12 +90,15 @@ def match_regrid(filename1, filename2, reappend_dim=True, spec_axis=None,
         slices[spec_axis] = \
             slice(spec_slice[0], spec_slice[1], step)
 
+        final_slices[spec_axis] = \
+            slice(spec_slice[0], spec_slice[1], step)
+
     # Assume numpy convention for axes
     new_wcs = WCS(hdr2).slice(slices)
 
     shape1 = fits1[0].shape
     shape2 = fits2[0].data[slices].shape
-    full_shape = fits2[0].shape
+    full_shape = fits2[0].data[final_slices].shape
 
     fits2.close()
 
@@ -247,4 +251,4 @@ if __name__ == '__main__':
         is_binary_mask = False
 
     match_regrid(file1, file2, save_output=True, save_name=save_name,
-                 is_binary_mask=is_binary_mask)  # ,spec_slice=[670, 1901])
+                 is_binary_mask=is_binary_mask, spec_slice=[0, 10])
