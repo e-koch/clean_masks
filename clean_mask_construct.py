@@ -40,7 +40,7 @@ class CleanMask(object):
 
     """
     def __init__(self, cube, low_cut, high_cut, beam=None, pbcoverage=None,
-                 pb_thresh=0.7):
+                 pb_thresh=0.7, iteraxis=0):
         super(CleanMask, self).__init__()
         self._cube = cube
         self.low_cut = low_cut
@@ -70,6 +70,10 @@ class CleanMask(object):
             self.pb_flag = False
 
         self.vel_slices = self.cube.shape[0]  # Generalize with WCS object
+        if iteraxis > len(self.cube.shape):
+            raise IndexError(str(iteraxis)+"is greater than the total number"
+                             " of axes.")
+        self.iteraxis = iteraxis
 
         self._low_mask = None
         self._high_mask = None
@@ -277,7 +281,9 @@ class CleanMask(object):
         Save the final mask as a FITS file. Optionally append the parameters
         used to create the mask.
         '''
-        pass
+
+        if header["NAXIS"]:
+            # Check for
 
 
     def make_mask(self, method="dilate", compute_slicewise=False,
@@ -373,6 +379,12 @@ class Cube(object):
         '''
         if self.is_hdu:
             self.cube.close()
+
+    def generate_slice(self, iteraxis):
+        slices = [slice(None)] * len(self.shape)
+        for i in xrange(self.shape[iteraxis]):
+            slices[iteraxis] = i
+            yield self[slices]
 
     def __gt__(self, value):
         return self[:] > value
