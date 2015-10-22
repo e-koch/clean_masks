@@ -69,7 +69,6 @@ class CleanMask(object):
             self.pb_mask = np.ones_like(cube, dtype=bool)
             self.pb_flag = False
 
-        self.vel_slices = self.cube.shape[0]  # Generalize with WCS object
         if iteraxis > len(self.cube.shape):
             raise IndexError(str(iteraxis)+"is greater than the total number"
                              " of axes.")
