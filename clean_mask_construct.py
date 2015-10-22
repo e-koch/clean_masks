@@ -373,6 +373,12 @@ class Cube(object):
         else:
             return self.cube.size
 
+    def close(self):
+        '''
+        If an HDU, close it.
+        '''
+        self.cube.close()
+
     def __gt__(self, value):
         return self[:] > value
 
