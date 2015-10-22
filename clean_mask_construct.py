@@ -361,17 +361,11 @@ class Cube(object):
 
     @property
     def shape(self):
-        if self.is_hdu:
-            return self.cube.data.shape
-        else:
-            return self.cube.shape
+        return self.cube.shape
 
     @property
     def size(self):
-        if self.is_hdu:
-            return self.cube.data.size
-        else:
-            return self.cube.size
+        return self.cube.size
 
     def close(self):
         '''
