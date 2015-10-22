@@ -93,11 +93,11 @@ class CleanMask(object):
             sums = 0.0
             num_finite = 0
 
-            for i in range(self.vel_slices):
+            for plane in self.cube.generate_slice(self.iteraxis):
 
-                sums += np.nansum(self.cube[i, :, :])
+                sums += np.nansum(plane)
 
-                num_finite += np.isfinite(self.cube[i, :, :]).sum()
+                num_finite += np.isfinite(plane).sum()
 
             mean = sums / num_finite
 
@@ -172,11 +172,13 @@ class CleanMask(object):
                 continue
 
             if verbose:
-                print "Iteration %s of %s" % (str(i+1), self.vel_slices)
+                print "Iteration %s of %s" % (str(i+1),
+                                              self.cube.shape[self.iteraxis])
 
             self.high_mask[slices] = \
-                reconstruction(self.high_mask[slices],
-                               self.low_mask[slices], selem=dilate_struct)
+                reconstruction(self.high_mask[slices].squeeze(),
+                               self.low_mask[slices].squeeze(),
+                               selem=dilate_struct)
 
         self._mask = self._high_mask
 
@@ -216,10 +218,11 @@ class CleanMask(object):
                                                             return_slice=False)):
 
             if verbose:
-                print "Iteration %s of %s" % (str(i+1), self.vel_slices)
+                print "Iteration %s of %s" % (str(i+1),
+                                              self.cube.shape[self.iteraxis])
 
             # Skip empty channels
-            if self.high_mask[slices].max is False:
+            if self.high_mask[slices].max() is False:
                 continue
 
             low_labels, low_num = nd.label(self._low_mask[slices], connect)
