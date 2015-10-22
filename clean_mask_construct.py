@@ -74,6 +74,9 @@ class CleanMask(object):
                              " of axes.")
         self.iteraxis = iteraxis
 
+        self.restor_dims = [np.newaxis if i == 1 else slice(None)
+                            for i in self.cube.shape]
+
         self._low_mask = None
         self._high_mask = None
 
@@ -177,7 +180,7 @@ class CleanMask(object):
             self.high_mask[slices] = \
                 reconstruction(self.high_mask[slices].squeeze(),
                                self.low_mask[slices].squeeze(),
-                               selem=dilate_struct)
+                               selem=dilate_struct)[self.restor_dims]
 
         self._mask = self._high_mask
 
@@ -276,7 +279,7 @@ class CleanMask(object):
                                                   return_slice=False):
             self._mask[slices] = \
                 median_filter(self._mask[slices],
-                              footprint=footprint)
+                              footprint=footprint)[self.restor_dims]
 
         return self
 
