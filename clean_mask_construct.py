@@ -7,6 +7,7 @@ import astropy.units as u
 from astropy.io import fits
 from astropy.extern import six
 import astropy
+from skimage.morphology import reconstruction
 
 '''
 Routines for constructing a robust clean mask.
@@ -152,14 +153,12 @@ class CleanMask(object):
         else:
             raise TypeError("which_mask must be 'final', 'low', or 'high'.")
 
-    def dilate_into_low(self, max_iter=100, verbose=False):
+    def dilate_into_low(self, verbose=False):
         '''
-        Dilates the high mask into the low.
-        The stopping criterion is when the higher mask crosses lower the one
+        Dilates the high mask into the low using morphological reconstruction.
         '''
 
         dilate_struct = nd.generate_binary_structure(2, 3)
-        print dilate_struct.shape
 
         for i in range(self.vel_slices):
 
@@ -170,28 +169,9 @@ class CleanMask(object):
             if verbose:
                 print "Iteration %s of %s" % (str(i+1), self.vel_slices)
 
-            iters = 0
-            while True:
-                self._high_mask[i, :, :] = \
-                    nd.binary_dilation(self._high_mask[i, :, :],
-                                       structure=dilate_struct)
-
-                posns = np.where(self._high_mask[i, :, :] > 0)
-
-                if np.any(self._low_mask[i, :, :][posns] == 0):
-
-                    # Go back one dilation
-                    self._high_mask[i, :, :] = \
-                        nd.binary_erosion(self._high_mask[i, :, :],
-                                          structure=dilate_struct)
-
-                    break
-
-                iters += 1
-
-                if iters == max_iter:
-                    print "Reached max iterations."
-                    break
+            self.high_mask[i, :, :] = \
+                reconstruction(self.high_mask[i, :, :],
+                               self.low_mask[i, :, :], selem=dilate_struct)
 
         self._mask = self._high_mask
 
@@ -221,7 +201,7 @@ class CleanMask(object):
             minor = self.minor.to(u.deg).value/pixscale
 
             # Round down by default?
-            #Should this be made into an optional input?
+            # Should this be made into an optional input?
             beam_pix_area = np.floor(np.pi * major * minor)
 
         else:
