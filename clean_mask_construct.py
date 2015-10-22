@@ -103,8 +103,7 @@ class CleanMask(object):
 
             var = 0.0
 
-            for i in range(self.vel_slices):
-                plane = self.cube[i, :, :]
+            for plane in self.cube.generate_slice(self.iteraxis):
                 var += np.nansum(np.power(plane - mean, 2), axis=None)
 
             std = np.sqrt(var) / (num_finite - 1)
@@ -115,9 +114,10 @@ class CleanMask(object):
             self._low_mask = np.zeros_like(self.cube, dtype=bool)
             self._high_mask = np.zeros_like(self.cube, dtype=bool)
 
-            for i in range(self.vel_slices):
-                self._low_mask[i, :, :] = self.cube[i, :, :] > low_thresh
-                self._high_mask[i, :, :] = self.cube[i, :, :] > high_thresh
+            for slices in self.cube.generate_slice(self.iteraxis,
+                                                   return_slice=False):
+                self._low_mask[slices] = self.cube[slices] > low_thresh
+                self._high_mask[slices] = self.cube[slices] > high_thresh
 
         else:
             mean = np.nanmean(self.cube[:])
@@ -164,18 +164,19 @@ class CleanMask(object):
 
         dilate_struct = nd.generate_binary_structure(2, 3)
 
-        for i in range(self.vel_slices):
+        for i, slices in enumerate(self.cube.generate_slice(self.iteraxis,
+                                                            return_slice=False)):
 
             # Skip empty channels
-            if self._high_mask[i, :, :].max() is False:
+            if self._high_mask[slices].max() is False:
                 continue
 
             if verbose:
                 print "Iteration %s of %s" % (str(i+1), self.vel_slices)
 
-            self.high_mask[i, :, :] = \
-                reconstruction(self.high_mask[i, :, :],
-                               self.low_mask[i, :, :], selem=dilate_struct)
+            self.high_mask[slices] = \
+                reconstruction(self.high_mask[slices],
+                               self.low_mask[slices], selem=dilate_struct)
 
         self._mask = self._high_mask
 
@@ -211,28 +212,28 @@ class CleanMask(object):
         else:
             beam_pix_area = 0
 
-        for i in range(self.vel_slices):
+        for i, slices in enumerate(self.cube.generate_slice(self.iteraxis,
+                                                            return_slice=False)):
 
             if verbose:
                 print "Iteration %s of %s" % (str(i+1), self.vel_slices)
 
             # Skip empty channels
-            if self.high_mask[i, :, :].max is False:
+            if self.high_mask[slices].max is False:
                 continue
 
-            low_labels, low_num = nd.label(self._low_mask[i, :, :], connect)
+            low_labels, low_num = nd.label(self._low_mask[slices], connect)
 
             for j in range(1, low_num+1):
 
                 low_pix = zip(*np.where(low_labels == j))
 
-                high_pix = zip(*np.where(self._high_mask[i, :, :] > 0))
+                high_pix = zip(*np.where(self._high_mask[slices] > 0))
 
                 # Now check for overlap
 
                 matches = list(set(low_pix) & set(high_pix))
 
-                # Add in some check to make sure region is at least the beam size.
                 if len(matches) >= min_pix:
                     continue
 
@@ -243,7 +244,7 @@ class CleanMask(object):
                 y_pos = [y for x, y in low_pix]
 
                 # If less than match threshold, remove region in the low mask
-                self._low_mask[i, :, :][x_pos, y_pos] = 0
+                self._low_mask[slices][x_pos, y_pos] = 0
 
         self._mask = self._low_mask
 
@@ -269,9 +270,10 @@ class CleanMask(object):
 
         from scipy.ndimage import median_filter
 
-        for i in range(self.vel_slices):
-            self._mask[i, :, :] = \
-                median_filter(self._mask[i, :, :],
+        for i, slices in self.cube.generate_slice(self.iteraxis,
+                                                  return_slice=False):
+            self._mask[slices] = \
+                median_filter(self._mask[slices],
                               footprint=footprint)
 
         return self
@@ -282,9 +284,7 @@ class CleanMask(object):
         used to create the mask.
         '''
 
-        if header["NAXIS"]:
-            # Check for
-
+        pass
 
     def make_mask(self, method="dilate", compute_slicewise=False,
                   smooth=False, kern_size='beam', pixscale=None,
@@ -380,11 +380,14 @@ class Cube(object):
         if self.is_hdu:
             self.cube.close()
 
-    def generate_slice(self, iteraxis):
+    def generate_slice(self, iteraxis, return_slice=True):
         slices = [slice(None)] * len(self.shape)
         for i in xrange(self.shape[iteraxis]):
             slices[iteraxis] = i
-            yield self[slices]
+            if return_slice:
+                yield self[slices]
+            else:
+                yield slices
 
     def __gt__(self, value):
         return self[:] > value
