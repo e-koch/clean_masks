@@ -113,8 +113,8 @@ class CleanMask(object):
             low_thresh = mean + self.low_cut * std
             high_thresh = mean + self.high_cut * std
 
-            self._low_mask = np.zeros_like(self.cube, dtype=bool)
-            self._high_mask = np.zeros_like(self.cube, dtype=bool)
+            self._low_mask = np.zeros(self.cube.shape, dtype=bool)
+            self._high_mask = np.zeros(self.cube.shape, dtype=bool)
 
             for slices in self.cube.generate_slice(self.iteraxis,
                                                    return_slice=False):
