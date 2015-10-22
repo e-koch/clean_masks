@@ -272,6 +272,14 @@ class CleanMask(object):
 
         return self
 
+    def save_to_fits(self, filename, header=None, append_comments=True):
+        '''
+        Save the final mask as a FITS file. Optionally append the parameters
+        used to create the mask.
+        '''
+        pass
+
+
     def make_mask(self, method="dilate", compute_slicewise=False,
                   smooth=False, kern_size='beam', pixscale=None,
                   verbose=False):
@@ -295,8 +303,16 @@ class CleanMask(object):
 
 
 class Cube(object):
-    """docstring for Cube"""
-    def __init__(self, cube, huge_flag=None, huge_thresh=1e8):
+    """
+    Cube attempts to handle numpy arrays and FITS HDUs transparently. This
+    is useful for massive datasets, in particular. The data is loaded in only
+    for the requested slice.
+
+    It is certainly *NOT* robust or complete, but handles what is needed for
+    creating CLEAN masks.
+    """
+    def __init__(self, cube, huge_flag=None, huge_thresh=1e8,
+                 squeeze=True):
 
         self.cube = cube
 
