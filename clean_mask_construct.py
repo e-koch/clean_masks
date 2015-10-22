@@ -159,6 +159,7 @@ class CleanMask(object):
         '''
 
         dilate_struct = nd.generate_binary_structure(2, 3)
+        print dilate_struct.shape
 
         for i in range(self.vel_slices):
 
@@ -354,13 +355,13 @@ class Cube(object):
         return fits.open(fitsfile)[ext]
 
     def _is_hdu(self):
-        if hasattr(self.cube, 'data'):
+        if hasattr(self.cube, 'header'):
             return True
         return False
 
     @property
     def is_hdu(self):
-        return self._is_hdu
+        return self._is_hdu()
 
     @property
     def shape(self):
