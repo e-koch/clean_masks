@@ -76,6 +76,7 @@ class CleanMask(object):
 
         self.restor_dims = [np.newaxis if i == 1 else slice(None)
                             for i in self.cube.shape]
+        self.restor_dims.pop(self.iteraxis)
 
         self._low_mask = None
         self._high_mask = None
