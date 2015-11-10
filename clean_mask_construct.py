@@ -111,6 +111,10 @@ class CleanMask(object):
 
             std = np.sqrt(var / (num_finite - 1))
 
+            print "Slice"
+            print mean
+            print std
+
             low_thresh = mean + self.low_cut * std
             high_thresh = mean + self.high_cut * std
 
@@ -125,6 +129,10 @@ class CleanMask(object):
         else:
             mean = np.nanmean(self.cube[:])
             std = np.nanstd(self.cube[:])
+
+            print "Full"
+            print mean
+            print std
 
             low_thresh = mean + self.low_cut * std
             high_thresh = mean + self.high_cut * std
@@ -323,7 +331,7 @@ class Cube(object):
     It is certainly *NOT* robust or complete, but handles what is needed for
     creating CLEAN masks.
     """
-    def __init__(self, cube, huge_flag=None, huge_thresh=1e8,
+    def __init__(self, cube, huge_flag=None, huge_thresh=5e9,
                  squeeze=True):
 
         self.cube = cube
