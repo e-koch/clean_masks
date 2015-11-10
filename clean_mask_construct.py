@@ -109,7 +109,7 @@ class CleanMask(object):
             for plane in self.cube.generate_slice(self.iteraxis):
                 var += np.nansum(np.power(plane - mean, 2), axis=None)
 
-            std = np.sqrt(var) / (num_finite - 1)
+            std = np.sqrt(var / (num_finite - 1))
 
             low_thresh = mean + self.low_cut * std
             high_thresh = mean + self.high_cut * std
