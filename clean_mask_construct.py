@@ -276,8 +276,8 @@ class CleanMask(object):
 
         from scipy.ndimage import median_filter
 
-        for i, slices in self.cube.generate_slice(self.iteraxis,
-                                                  return_slice=False):
+        for i, slices in enumerate(self.cube.generate_slice(self.iteraxis,
+                                                            return_slice=False)):
             self._mask[slices] = \
                 median_filter(self._mask[slices],
                               footprint=footprint)[self.restor_dims]
