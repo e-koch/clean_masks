@@ -145,8 +145,6 @@ class CleanMask(object):
             self._low_mask = self.cube > low_thresh
             self._high_mask = self.cube > high_thresh
 
-        return self
-
     @property
     def low_mask(self):
         return self._low_mask
@@ -202,8 +200,6 @@ class CleanMask(object):
 
         self._mask = self._high_mask
         self._method = "dilate"
-
-        return self
 
     def remove_high_components(self, min_pix=10, beam_check=False,
                                pixscale=None, verbose=False):
@@ -273,8 +269,6 @@ class CleanMask(object):
         self._mask = self._low_mask
         self._method = "remove small"
 
-        return self
-
     def _smooth_it(self, kern_size='beam', pixscale=None):
         '''
         Apply median filter to smooth the edges of the mask.
@@ -303,8 +297,6 @@ class CleanMask(object):
 
         self._smoothed = True
 
-        return self
-
     def apply_pbmask(self):
         '''
         Apply the given primary beam coverage mask.
@@ -332,7 +324,6 @@ class CleanMask(object):
         hdu = fits.PrimaryHDU(self.mask.astype(">i2"), header=header)
         hdu.writeto(filename)
 
-
     def make_mask(self, method="dilate", compute_slicewise=False,
                   smooth=False, kern_size='beam', pixscale=None,
                   verbose=False):
@@ -350,8 +341,6 @@ class CleanMask(object):
             self._smooth_it(kern_size=kern_size, pixscale=pixscale)
 
         self.apply_pbmask()
-
-        return self
 
 
 class Cube(object):
