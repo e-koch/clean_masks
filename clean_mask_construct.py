@@ -83,6 +83,11 @@ class CleanMask(object):
 
         self._mask = None
 
+        self._pb_applied = False
+        self._smoothed = False
+        self._method = "None"
+        self._pb_thresh = pb_thresh
+
     @property
     def cube(self):
         return Cube(self._cube)
@@ -154,6 +159,10 @@ class CleanMask(object):
     def mask(self):
         return self._mask
 
+    @property
+    def method(self):
+        return self._method
+
     def to_RadioMask(self, which_mask='final'):
 
         if which_mask is 'final':
@@ -192,6 +201,7 @@ class CleanMask(object):
                                selem=dilate_struct)[self.restor_dims]
 
         self._mask = self._high_mask
+        self._method = "dilate"
 
         return self
 
@@ -261,6 +271,7 @@ class CleanMask(object):
                 self._low_mask[slices][x_pos, y_pos] = 0
 
         self._mask = self._low_mask
+        self._method = "remove small"
 
         return self
 
@@ -290,7 +301,17 @@ class CleanMask(object):
                 median_filter(self._mask[slices],
                               footprint=footprint)[self.restor_dims]
 
+        self._smoothed = True
+
         return self
+
+    def apply_pbmask(self):
+        '''
+        Apply the given primary beam coverage mask.
+        '''
+        if self.pb_flag:
+            self._mask *= self.pb_mask
+            self._pb_applied = True
 
     def save_to_fits(self, filename, header=None, append_comments=True):
         '''
@@ -298,7 +319,19 @@ class CleanMask(object):
         used to create the mask.
         '''
 
-        pass
+        if header is not None and append_comments:
+            header["COMMENT"] = "Settings used in CleanMask: "
+            header["COMMENT"] = "Mask created with method "+self.method
+            if self._smoothed:
+                header["COMMENT"] = "Mask smoothed with beam kernel."
+            if self.pb_flag:
+                header["COMMENT"] = \
+                    "Mask corrected for pb coverage with a threshold of " + \
+                    str(self._pb_thresh)
+
+        hdu = fits.PrimaryHDU(self.mask.astype(">i2"), header=header)
+        hdu.writeto(filename)
+
 
     def make_mask(self, method="dilate", compute_slicewise=False,
                   smooth=False, kern_size='beam', pixscale=None,
@@ -316,8 +349,7 @@ class CleanMask(object):
         if smooth:
             self._smooth_it(kern_size=kern_size, pixscale=pixscale)
 
-        if self.pb_flag:
-            self._mask *= self.pb_mask
+        self.apply_pbmask()
 
         return self
 
