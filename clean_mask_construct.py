@@ -321,6 +321,9 @@ class CleanMask(object):
                     "Mask corrected for pb coverage with a threshold of " + \
                     str(self._pb_thresh)
 
+        # Set BITPIX to 8 (unsigned integer)
+        header["BITPIX"] = 8
+
         hdu = fits.PrimaryHDU(self.mask.astype(">i2"), header=header)
         hdu.writeto(filename)
 
